@@ -1,0 +1,14 @@
+{
+  "name": "cachie",
+  "version": "0.0.1",
+  "description": "Versatile cache wrapper.",
+  "main": "Cachie.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tomas Savigliano",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.4.7"
+  }
+}
