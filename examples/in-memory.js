@@ -3,6 +3,7 @@
 const Cachie = require('../Cachie');
 const cachie = new Cachie({type: Cachie.TYPE.IN_MEMORY});
 
+cachie.connect();
 
 // Set.
 cachie.set('name', 'Tomas');
@@ -20,7 +21,6 @@ cachie.add('list', 'apple')
   .then(list => console.log('List:', list));
 });
 
-
 const childCache = cachie.childCollection({
   type: Cachie.TYPE.IN_MEMORY,
   collection: 'child'
@@ -29,6 +29,9 @@ const grandChildCache = childCache.childCollection({
   type: Cachie.TYPE.IN_MEMORY,
   collection: 'grandchild'
 });
+
+
+grandChildCache.connect();
 
 grandChildCache.set('age', 12);
 

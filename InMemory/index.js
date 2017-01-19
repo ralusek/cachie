@@ -1,5 +1,8 @@
 'use strict';
 
+const Promise = require('bluebird');
+
+
 // This establishes a private namespace.
 const namespace = new WeakMap();
 function p(object) {
