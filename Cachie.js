@@ -79,9 +79,12 @@ class Cachie {
   childCollection(config) {
     config = config || {};
     if (!config.collection) throw new Error('Must specify a collection to create child collection.');
-    let collection = p(this).collection || [];
+    const collection = p(this).collection || [];
     config.collection = collection.concat(Array.isArray(config.collection) ? config.collection : [config.collection]);
+
+    config.type = config.type || p(this).type;
     config.keyDelimiter = p(this).keyDelimiter;
+    
     return new Cachie(config);
   }
 
