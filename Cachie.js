@@ -94,13 +94,10 @@ class Cachie {
    *
    */
   set(key, value, config) {
-    console.log('Awaiting connection.')
     return p(this).deferrari.deferUntil(CONNECTED)
     .then(() => {
-      console.log('Connection achieved.');
       config = config || {};
       const nestedKey = this.constructKey(key);
-      console.log('key:', nestedKey);
       return p(this).cache.set(nestedKey, value)
       .then(result => {
         if (config.includeKey) return {key: nestedKey, result};
