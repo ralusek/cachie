@@ -1,6 +1,9 @@
 'use strict';
 
 const Promise = require('bluebird');
+const Deferrari = require('deferrari');
+
+const CONNECTED = 'connected';
 
 
 // This establishes a private namespace.
@@ -42,34 +45,21 @@ class Cachie {
       [TYPE.IN_MEMORY]: require('./InMemory')
     })[p(this).type])(config);
 
-    p(this).connected = false;
-    p(this).awaitingConnection = new Set();
+    p(this).deferrari = new Deferrari({Promise: Promise});
   }
 
   /**
    *
    */
   connect(config) {
-    return p(this).cache.connect(config)
-    .tap((response) => {
-      p(this).connected = true;
-      p(this).awaitingConnection.forEach(deferred => deferred.resolve(response));
-    })
-    .catch(err => {
-      p(this).awaitingConnection.forEach(deferred => deferred.reject(err));
-      return Promise.reject(err);
-    })
-    .finally(() => p(this).awaitingConnection.clear());
-  }
+    config = config || {};
+    if (config.cacheClient) p(this).cacheClient = config.cacheClient;
+    if (p(this).cacheClient) return p(this).deferrari.resolve(CONNECTED, p(this).cacheClient);
 
-  /**
-   *
-   */
-  awaitConnection() {
-    if (p(this).connected) return Promise.resolve();
-    
-    return new Promise((resolve, reject) => {
-      p(this).awaitingConnection.add({resolve, reject});
+    return p(this).cache.connect(config)
+    .tap(client => {
+      p(this).cacheClient = client;
+      return p(this).deferrari.resolve(CONNECTED, client);
     });
   }
 
@@ -84,8 +74,13 @@ class Cachie {
 
     config.type = config.type || p(this).type;
     config.keyDelimiter = p(this).keyDelimiter;
+    config.cacheClient = config.cacheClient || p(this).cacheClient;
     
-    return new Cachie(config);
+    const childCollection = new Cachie(config);
+    p(this).deferrari.deferUntil(CONNECTED)
+    .then(client => childCollection.connect({cacheClient: client}));
+
+    return childCollection;
   }
 
   /**
@@ -99,10 +94,13 @@ class Cachie {
    *
    */
   set(key, value, config) {
-    return this.awaitConnection()
+    console.log('Awaiting connection.')
+    return p(this).deferrari.deferUntil(CONNECTED)
     .then(() => {
+      console.log('Connection achieved.');
       config = config || {};
       const nestedKey = this.constructKey(key);
+      console.log('key:', nestedKey);
       return p(this).cache.set(nestedKey, value)
       .then(result => {
         if (config.includeKey) return {key: nestedKey, result};
@@ -115,7 +113,7 @@ class Cachie {
    *
    */
   get(key, config) {
-    return this.awaitConnection()
+    return p(this).deferrari.deferUntil(CONNECTED)
     .then(() => {
       config = config || {};
       const nestedKey = this.constructKey(key);
@@ -131,7 +129,7 @@ class Cachie {
    *
    */
   add(key, value, config) {
-    return this.awaitConnection()
+    return p(this).deferrari.deferUntil(CONNECTED)
     .then(() => {
       config = config || {};
       const nestedKey = this.constructKey(key);
