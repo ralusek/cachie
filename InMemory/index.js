@@ -39,7 +39,7 @@ class InMemoryCache {
     .then(result => {
       result = result || new Set();
       result.add(value);
-      this.set(key, result);
+      return this.set(key, result);
     });
   }
 }

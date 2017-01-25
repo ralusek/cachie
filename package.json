@@ -9,6 +9,7 @@
   "author": "Tomas Savigliano",
   "license": "ISC",
   "dependencies": {
-    "bluebird": "^3.4.7"
+    "bluebird": "^3.4.7",
+    "deferrari": "^1.0.3"
   }
 }
