@@ -1,6 +1,6 @@
 {
   "name": "cachie",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Versatile cache wrapper.",
   "main": "Cachie.js",
   "scripts": {
