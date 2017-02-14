@@ -7,7 +7,10 @@ cachie.connect();
 
 // Set.
 cachie.string.set('name', 'Tomas', {force: true, returning: true})
-.then(response => console.log('Redis set response:', response));
+.then(response => console.log('Redis set response:', response))
+// Get.
+.then(() => cachie.string.get('name'))
+.then(response => console.log('Redis get response:', response));
 
 // Add
 cachie.set.add('players', 'Lionel', {force: true})

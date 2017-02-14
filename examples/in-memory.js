@@ -7,11 +7,14 @@ cachie.connect();
 
 // Set.
 cachie.string.set('name', 'Tomas', {force: true, returning: true})
-.then(response => console.log('Redis set response:', response));
+.then(response => console.log('In Memory set response:', response))
+// Get.
+.then(() => cachie.string.get('name'))
+.then(response => console.log('In Memory get response:', response));
 
 // Add
 cachie.set.add('players', 'Lionel', {force: true})
-.then(response => console.log('Redis add response:', response));
+.then(response => console.log('In Memory add response:', response));
 
 // // Get.
 // cachie.get('name')
@@ -27,11 +30,11 @@ cachie.set.add('players', 'Lionel', {force: true})
 // });
 
 // const childCache = cachie.childCollection({
-//   type: Cachie.TYPE.REDIS,
+//   type: Cachie.TYPE.IN_MEMORY,
 //   collection: 'child'
 // });
 // const grandChildCache = childCache.childCollection({
-//   type: Cachie.TYPE.REDIS,
+//   type: Cachie.TYPE.IN_MEMORY,
 //   collection: 'grandchild'
 // });
 
