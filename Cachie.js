@@ -1,6 +1,8 @@
 'use strict';
 
 const Promise = require('bluebird');
+const _ensureArray = require('hodash.ensure-array');
+const _flattenToSet = require('hodash.flatten-to-set');
 const Deferrari = require('deferrari');
 
 const CONNECTED = 'connected';
@@ -21,6 +23,12 @@ const TYPE = Object.freeze({
 const TYPES = new Set();
 Object.keys(TYPE).forEach(key => TYPES.add(TYPE[key]));
 
+const INTERFACE = Object.freeze({
+  lists: ['add', 'list'],
+  sets: ['add', 'list'],
+  strings: ['set', 'get']
+});
+
 
 
 /**
@@ -40,12 +48,91 @@ class Cachie {
     }
 
     p(this).keyDelimiter = config.keyDelimiter || ' > ';
+
+    config.cache = this;
     
     p(this).cache = new (({
-      [TYPE.IN_MEMORY]: require('./InMemory')
+      [TYPE.IN_MEMORY]: require('./InMemory'),
+      [TYPE.REDIS]: require('./Redis')
     })[p(this).type])(config);
 
     p(this).deferrari = new Deferrari({Promise: Promise});
+
+    // Add interface methods.
+
+    this.delete = (key, config) => {
+      config = config || {};
+      return this._prepare(key)
+      .then(nestedKey => {
+        return p(this).cache.delete(nestedKey, config)
+        .then(result => {
+          if (config.includeKey) return {key: nestedKey, result};
+          return result;
+        });
+      });
+    };
+    
+    this.string = Object.freeze({
+      get: (key, config) => {
+        config = config || {};
+        return this._prepare(key)
+        .then(nestedKey => {
+          return p(this).cache.string.get(nestedKey, config)
+          .then(result => {
+            if (config.includeKey) return {key: nestedKey, result};
+            return result;
+          });
+        });
+      },
+      set: (key, value, config) => {
+        config = config || {};
+        return this._prepare(key)
+        .then(nestedKey => {
+          return p(this).cache.string.set(nestedKey, value, config)
+          .then(result => {
+            if (config.includeKey) return {key: nestedKey, result};
+            return result;
+          });
+        });
+      },
+      delete: (key, config) => {
+        config = config || {};
+        return this._prepare(key)
+        .then(nestedKey => {
+          return p(this).cache.string.delete(nestedKey, config)
+          .then(result => {
+            if (config.includeKey) return {key: nestedKey, result};
+            return result;
+          });
+        });
+      }
+    });
+
+    this.set = Object.freeze({
+      add: (key, values, config) => {
+        config = config || {};
+        return this._prepare(key)
+        .then(nestedKey => {
+          values = _flattenToSet(_ensureArray(values));
+          return p(this).cache.set.add(nestedKey, values, config)
+          .then(result => {
+            if (config.includeKey) return {key: nestedKey, result};
+            return result;
+          });
+        });
+      },
+      delete: (key, config) => {
+        config = config || {};
+        return this._prepare(key)
+        .then(nestedKey => {
+          return p(this).cache.set.delete(nestedKey, config)
+          .then(result => {
+            if (config.includeKey) return {key: nestedKey, result};
+            return result;
+          });
+        });
+      }
+    });
   }
 
   /**
@@ -89,53 +176,14 @@ class Cachie {
   constructKey(key) {
     return (p(this).collection || []).concat(key).join(p(this).keyDelimiter);
   }
-  
+
+
   /**
-   *
+   * Prepare.
    */
-  set(key, value, config) {
+  _prepare(key) {
     return p(this).deferrari.deferUntil(CONNECTED)
-    .then(() => {
-      config = config || {};
-      const nestedKey = this.constructKey(key);
-      return p(this).cache.set(nestedKey, value)
-      .then(result => {
-        if (config.includeKey) return {key: nestedKey, result};
-        return result;
-      });
-    });
-  }
-  
-  /**
-   *
-   */
-  get(key, config) {
-    return p(this).deferrari.deferUntil(CONNECTED)
-    .then(() => {
-      config = config || {};
-      const nestedKey = this.constructKey(key);
-      return p(this).cache.get(nestedKey)
-      .then(result => {
-        if (config.includeKey) return {key: nestedKey, result};
-        return result;
-      });
-    });
-  }
-  
-  /**
-   *
-   */
-  add(key, value, config) {
-    return p(this).deferrari.deferUntil(CONNECTED)
-    .then(() => {
-      config = config || {};
-      const nestedKey = this.constructKey(key);
-      return p(this).cache.add(nestedKey, value)
-      .then(result => {
-        if (config.includeKey) return {key: nestedKey, result};
-        return result;
-      });
-    });
+    .return(this.constructKey(key));
   }
 }
 

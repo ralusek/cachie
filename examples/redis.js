@@ -1,7 +1,7 @@
 'use strict';
 
 const Cachie = require('../Cachie');
-const cachie = new Cachie({type: Cachie.TYPE.IN_MEMORY});
+const cachie = new Cachie({type: Cachie.TYPE.REDIS});
 
 cachie.connect();
 
@@ -42,4 +42,3 @@ cachie.set.add('players', 'Lionel', {force: true})
 
 // grandChildCache.get('age', {includeKey: true})
 // .then(age => console.log('Age:', age))
-
