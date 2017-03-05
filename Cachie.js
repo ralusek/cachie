@@ -79,6 +79,7 @@ class Cachie {
         .then(nestedKey => {
           return p(this).cache.string.get(nestedKey, config)
           .then(result => {
+            if (config.unstringify) result = JSON.parse(result);
             if (config.includeKey) return {key: nestedKey, result};
             return result;
           });
@@ -88,6 +89,7 @@ class Cachie {
         config = config || {};
         return this._prepare(key)
         .then(nestedKey => {
+          if (config.stringify) value = JSON.stringify(value);
           return p(this).cache.string.set(nestedKey, value, config)
           .then(result => {
             if (config.includeKey) return {key: nestedKey, result};
