@@ -3,6 +3,7 @@
 const Promise = require('bluebird');
 const errors = require('../errors');
 const cachieErrors = require('../../errors');
+const utils = require('../utils');
 
 
 // This establishes a private namespace.
@@ -34,8 +35,8 @@ class RedisString {
   set(key, value, config) {
     config = config || {};
     let args = [key, value];
-    // Add expiration in MS.
-    if (config.expiresIn) args = args.concat(['PX', config.expiresIn]);
+    
+    args = args.concat(utils.argsForExpiration(config));
 
     // Handle conditionals.
     if (config.onlyIfExists) args.push('XX');
