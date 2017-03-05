@@ -24,7 +24,8 @@ module.exports.connect = function(config) {
     // Handle default, localhost.
     if (!config.nodes) config.nodes = {host: '127.0.0.1', port: 6379};
 
-    const nodes = _ensureArray(config.nodes);
+    const nodes = _ensureArray(config.nodes)
+    .map(node => Object.assign({host: '127.0.0.1', port: 6379}, node));
 
     // If mutliple nodes, treat as cluster.
     if (nodes.length > 1) {
