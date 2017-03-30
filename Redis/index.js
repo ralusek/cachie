@@ -26,7 +26,8 @@ class RedisCache {
   }
   
   connect(config) {
-    return connect(config)
+    config = config || {};
+    return Promise.resolve(config.cacheClient || connect(config))
     .tap(client => {
       p(this).client = client;
       // Methods for handling lists.

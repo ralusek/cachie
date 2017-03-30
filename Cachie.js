@@ -143,7 +143,6 @@ class Cachie {
   connect(config) {
     config = config || {};
     if (config.cacheClient) p(this).cacheClient = config.cacheClient;
-    if (p(this).cacheClient) return p(this).deferrari.resolve(CONNECTED, p(this).cacheClient);
 
     return p(this).cache.connect(config)
     .tap(client => {
