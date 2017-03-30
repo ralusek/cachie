@@ -47,7 +47,10 @@ module.exports.connect = function(config) {
         }
       });
     }
-    else redisClient = new Redis(nodes);
+    else {
+      console.log('Redis is connecting to node:', nodes);
+      redisClient = new Redis(nodes);
+    }
 
     redisClient.on('error', (err) => {
       console.log('Redis error ' + err);
