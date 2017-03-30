@@ -27,7 +27,7 @@ class RedisCache {
   
   connect(config) {
     return connect(config)
-    .then(client => {
+    .tap(client => {
       p(this).client = client;
       // Methods for handling lists.
       // this.list = new RedisList();
