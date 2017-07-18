@@ -4,6 +4,7 @@ const Promise = require('bluebird');
 const _ensureArray = require('hodash.ensure-array');
 const _flattenToSet = require('hodash.flatten-to-set');
 const Deferrari = require('deferrari');
+const Bunchie = require('bunchie');
 
 const CONNECTED = 'connected';
 
@@ -22,12 +23,6 @@ const TYPE = Object.freeze({
 
 const TYPES = new Set();
 Object.keys(TYPE).forEach(key => TYPES.add(TYPE[key]));
-
-const INTERFACE = Object.freeze({
-  lists: ['add', 'list'],
-  sets: ['add', 'list'],
-  strings: ['set', 'get']
-});
 
 
 
@@ -56,7 +51,11 @@ class Cachie {
       [TYPE.REDIS]: require('./Redis')
     })[p(this).type])(config);
 
+    // Used for deferring actions until connected.
     p(this).deferrari = new Deferrari({Promise: Promise});
+
+    // Used for clustering individual requests together into a multi-request
+    configureBunchie(this, config);
 
     // Add interface methods.
 
@@ -77,11 +76,33 @@ class Cachie {
         config = config || {};
         return this._prepare(key)
         .then(nestedKey => {
-          return p(this).cache.string.get(nestedKey, config)
+          return (
+            config.useBunching ?
+              p(this).bunchie.string.get.bunch(nestedKey)
+              .then(({handled}) => handled[nestedKey]) :
+              p(this).cache.string.get(nestedKey, config)
+          )
           .then(result => {
             if (config.unstringify) result = JSON.parse(result);
             if (config.includeKey) return {key: nestedKey, result};
+            if (config.mapToKey) return {[nestedKey]: result};
             return result;
+          });
+        });
+      },
+      getMulti: (keys, config) => {
+        config = config || {};
+        return this._prepare(keys)
+        .then(nestedKeys => {
+          return p(this).cache.string.getMulti(nestedKeys, config)
+          .then(results => {
+            if (config.unstringify) result = JSON.parse(result);
+            if (config.includeKey) return results.map((result, i) => ({key: nestedKeys[i], result}));
+            if (config.mapToKey) return results.reduce((mapped, result, i)=> {
+              mapped[nestedKeys[i]] = result;
+              return mapped;
+            }, {});
+            return results;
           });
         });
       },
@@ -174,18 +195,44 @@ class Cachie {
   /**
    *
    */
-  constructKey(key) {
-    return (p(this).collection || []).concat(key).join(p(this).keyDelimiter);
+  constructKeys(keys) {
+    const isArray = Array.isArray(keys);
+    keys = isArray ? keys : [keys];
+    keys = keys.map(key => (p(this).collection || []).concat(key).join(p(this).keyDelimiter));
+    return isArray ? keys : keys[0];
   }
 
 
   /**
    * Prepare.
    */
-  _prepare(key) {
+  _prepare(keys) {
     return p(this).deferrari.deferUntil(CONNECTED)
-    .return(this.constructKey(key));
+    .return(this.constructKeys(keys));
   }
+}
+
+
+/**
+ *
+ */
+function configureBunchie(cachie, config) {
+  p(cachie).bunchie = {
+    string: {
+      set: new Bunchie({
+        type: 'set',
+        minWaitTime: config.minBunchTime || 250
+      }),
+      get: new Bunchie({
+        type: 'set',
+        minWaitTime: config.minBunchTime || 250
+      })
+    }
+  };
+
+  p(cachie).bunchie.string.get.setBunchHandler(({bunch}) => {
+    return cachie.string.getMulti(Array.from(bunch), {mapToKey: true});
+  });
 }
 
 

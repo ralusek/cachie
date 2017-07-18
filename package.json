@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bluebird": "^3.4.7",
+    "bunchie": "^1.0.1",
     "deferrari": "^1.0.3",
     "hodash.ensure-array": "^1.0.0",
     "hodash.flatten-to-set": "^1.0.3",

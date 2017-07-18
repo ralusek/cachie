@@ -31,6 +31,13 @@ class RedisString {
     return p(this).client.get(key)
     .catch(err => errors.handle({err, key}));
   }
+
+  getMulti(keys, config) {
+    config = config || {};
+
+    return p(this).client.mget(keys)
+    .catch(err => errors.handle({err, keys}));
+  }
   
   set(key, value, config) {
     config = config || {};
