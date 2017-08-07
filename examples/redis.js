@@ -9,7 +9,7 @@ cachie.connect();
 cachie.string.set('name', 'Tomas', {force: true, returning: true})
 .then(response => console.log('Redis set response:', response))
 // Get.
-.then(() => cachie.string.get('name'))
+.then(() => cachie.string.get('name', {useBunching: true}))
 .then(response => console.log('Redis get response:', response));
 
 // Add

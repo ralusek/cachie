@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const _ensureArray = require('hodash.ensure-array');
 const _flattenToSet = require('hodash.flatten-to-set');
 const Deferrari = require('deferrari');
-const Bunchie = require('bunchie');
+const bunchie = require('bunchie');
 
 const CONNECTED = 'connected';
 
@@ -78,8 +78,8 @@ class Cachie {
         .then(nestedKey => {
           return (
             config.useBunching ?
-              p(this).bunchie.string.get.bunch(nestedKey)
-              .then(({handled}) => handled[nestedKey]) :
+              p(this).bunchie.string.get.add(nestedKey)
+              .then(({byKey}) => byKey[nestedKey]) :
               p(this).cache.string.get(nestedKey, config)
           )
           .then(result => {
@@ -219,19 +219,18 @@ class Cachie {
 function configureBunchie(cachie, config) {
   p(cachie).bunchie = {
     string: {
-      set: new Bunchie({
-        type: 'set',
-        minWaitTime: config.minBunchTime || 250
+      set: bunchie.scoped('set', {
+        minWait: config.minBunchTime || 100
       }),
-      get: new Bunchie({
-        type: 'set',
-        minWaitTime: config.minBunchTime || 250
+      get: bunchie.scoped('get', {
+        minWait: config.minBunchTime || 100
       })
     }
   };
 
-  p(cachie).bunchie.string.get.setBunchHandler(({bunch}) => {
-    return cachie.string.getMulti(Array.from(bunch), {mapToKey: true});
+  p(cachie).bunchie.string.get.addMiddleware((payload) => {
+    return cachie.string.getMulti(Array.from(payload.bunch), {mapToKey: true})
+    .then(response => Object.assign(payload, {byKey: response}));
   });
 }
 
