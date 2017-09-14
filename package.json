@@ -9,13 +9,13 @@
   "author": "Tomas Savigliano",
   "license": "ISC",
   "dependencies": {
-    "bluebird": "^3.4.7",
+    "bluebird": "3.4.7",
     "bunchie": "1.1.1",
-    "deferrari": "^1.0.3",
-    "hodash.ensure-array": "^1.0.0",
-    "hodash.flatten-to-set": "^1.0.3",
-    "hodash.is-set": "^1.0.0",
-    "ioredis": "^2.5.0",
-    "lodash.get": "^4.4.2"
+    "deferrari": "1.1.1",
+    "hodash.ensure-array": "1.0.0",
+    "hodash.flatten-to-set": "1.0.3",
+    "hodash.is-set": "1.0.0",
+    "ioredis": "2.5.0",
+    "lodash.get": "4.4.2"
   }
 }
